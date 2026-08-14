@@ -270,7 +270,7 @@ def install_dependencies(req_hash: str):
     
     # 1. Upgrade pip first
     try:
-        subprocess.run([VENV_PYTHON, "-m", "pip", "install", "--upgrade", "pip"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=60)
+        subprocess.run([VENV_PYTHON, "-m", "pip", "install", "--upgrade", "pip"], timeout=60)
     except Exception:
         pass # Not critical to fail launcher if pip upgrade fails
 
@@ -282,8 +282,6 @@ def install_dependencies(req_hash: str):
         try:
             res = subprocess.run(
                 [VENV_PYTHON, "-m", "pip", "install", "-r", REQUIREMENTS_FILE],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
                 timeout=180
             )
             if res.returncode == 0:
