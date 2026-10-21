@@ -92,3 +92,67 @@ def test_create_export_bundle():
     # TXT validation
     assert "NOBETH UNIVERSAL OCR" in bundle.txt_content
     assert "Meeting at 3 PM" in bundle.txt_content
+
+
+def test_export_to_csv_multiple_arrays():
+    data = {
+        "document_type": "invoice",
+        "invoice_number": "INV-555",
+        "items": [
+            {"desc": "Product A", "qty": 2},
+            {"desc": "Product B", "qty": 1},
+        ],
+        "taxes": [
+            {"name": "VAT", "rate": 0.15},
+        ],
+    }
+    csv_str = export_to_csv(data)
+    lines = [line.strip() for line in csv_str.strip().splitlines() if line.strip()]
+
+    # Header + 2 data rows
+    assert len(lines) == 3
+    assert "invoice_number" in lines[0]
+    assert "desc" in lines[0]
+    # taxes column should be preserved
+    assert "taxes" in lines[0]
+    assert "VAT" in lines[1]
+
+
+def test_export_to_csv_multiple_arrays_preservation():
+    data = {
+        "invoice_number": "INV-101",
+        "vendor": "ABC Store",
+        "line_items": [
+            {"description": "Notebook", "quantity": 2, "amount": 100},
+            {"description": "Pen", "quantity": 3, "amount": 30},
+        ],
+        "taxes": [
+            {"name": "GST", "amount": 11.70},
+            {"name": "Surcharge", "amount": 2.00},
+        ],
+        "notes": "Sample invoice",
+    }
+    csv_str = export_to_csv(data)
+    assert "INV-101" in csv_str
+    assert "ABC Store" in csv_str
+    assert "Notebook" in csv_str
+    assert "Pen" in csv_str
+    assert "GST" in csv_str
+    assert "Surcharge" in csv_str
+    assert "Sample invoice" in csv_str
+
+
+def test_export_to_csv_edge_cases_and_unicode():
+    data = {
+        "invoice_number": "INV-€999",
+        "customer": {"name": "François Müller", "notes": None},
+        "empty_items": [],
+        "line_items": [
+            {"item": "Café au lait", "price": "€4.50", "discount": None},
+        ],
+    }
+    csv_str = export_to_csv(data)
+    assert "INV-€999" in csv_str
+    assert "François Müller" in csv_str
+    assert "Café au lait" in csv_str
+    assert "€4.50" in csv_str

@@ -112,3 +112,97 @@ def test_txt_export_header_and_content():
     assert "bill.jpg" in txt
     assert "receipt" in txt
     assert "Item 1: 10.00" in txt
+
+
+def test_mock_gemini_extraction_and_structuring_pipeline():
+    from unittest.mock import MagicMock
+    from services.extraction_service import extract_raw_document
+    from services.structuring_service import structure_raw_extraction
+
+    # 1. Mock Gemini Service for Stage 1 Extraction
+    mock_service = MagicMock()
+    mock_service.generate_vision_content.return_value = (
+        "=== METADATA ===\n"
+        "DOCUMENT_TYPE: invoice\n"
+        "CONFIDENCE_LEVEL: HIGH\n"
+        "CONFIDENCE_SCORE: 0.95\n\n"
+        "=== RAW_TEXT ===\n"
+        "Nobeth Analytics Invoice\n"
+        "Invoice No: INV-100\n"
+        "Total: $150.00\n"
+    )
+
+    test_img = Image.new("RGB", (100, 100), color="white")
+    extraction_res = extract_raw_document([test_img], gemini_service=mock_service)
+
+    assert extraction_res.document_type == "invoice"
+    assert extraction_res.confidence_level == ConfidenceLevel.HIGH
+    assert extraction_res.confidence_score == 0.95
+    assert "INV-100" in extraction_res.verbatim_text
+    mock_service.generate_vision_content.assert_called_once()
+
+    # 2. Mock Gemini Service for Stage 2 Structuring
+    mock_service.generate_text_content.return_value = (
+        '{\n'
+        '  "document_type": "invoice",\n'
+        '  "invoice_no": "INV-100",\n'
+        '  "total": 150.00,\n'
+        '  "confidence_level": "HIGH"\n'
+        '}'
+    )
+
+    struct_res = structure_raw_extraction(
+        reviewed_raw_text=extraction_res.verbatim_text,
+        document_type_hint=extraction_res.document_type,
+        gemini_service=mock_service,
+    )
+
+    assert struct_res.is_valid is True
+    assert struct_res.document_type == "invoice"
+    assert struct_res.data["invoice_no"] == "INV-100"
+    assert struct_res.data["total"] == 150.00
+    # Traceability links should match
+    field_names = [t.field_name for t in struct_res.traceability]
+    assert "invoice_no" in field_names
+
+
+def test_mock_pipeline_error_handling():
+    from unittest.mock import MagicMock
+    import pytest
+    from services.extraction_service import extract_raw_document, parse_extraction_response
+    from services.structuring_service import structure_raw_extraction
+
+    # 1. Missing metadata header in raw extraction
+    raw_response_no_meta = "Just plain raw extracted text without metadata tags"
+    doc_type, conf, score, raw_text = parse_extraction_response(raw_response_no_meta)
+    assert doc_type == "unknown"
+    assert conf == ConfidenceLevel.HIGH
+    assert score is None
+    assert raw_text == raw_response_no_meta
+
+    # 2. Stage 1 API exception propagation
+    mock_failing_service = MagicMock()
+    mock_failing_service.generate_vision_content.side_effect = RuntimeError("Quota exceeded 429")
+    test_img = Image.new("RGB", (50, 50), color="blue")
+    with pytest.raises(RuntimeError) as exc_info:
+        extract_raw_document([test_img], gemini_service=mock_failing_service)
+    assert "Quota exceeded" in str(exc_info.value)
+
+    # 3. Stage 2 API exception propagation
+    mock_failing_service.generate_text_content.side_effect = RuntimeError("Service unavailable 503")
+    with pytest.raises(RuntimeError) as exc_info:
+        structure_raw_extraction("Sample text", gemini_service=mock_failing_service)
+    assert "Service unavailable" in str(exc_info.value)
+
+    # 4. Stage 2 Malformed JSON handling: preserves reviewed text without crashing
+    mock_malformed_service = MagicMock()
+    mock_malformed_service.generate_text_content.return_value = "This is not JSON at all: broken output {"
+    res_malformed = structure_raw_extraction(
+        reviewed_raw_text="Customer: John Doe\nAmount: $50",
+        document_type_hint="receipt",
+        gemini_service=mock_malformed_service,
+    )
+    assert res_malformed.is_valid is False
+    assert res_malformed.confidence_level == ConfidenceLevel.LOW
+    assert "Customer: John Doe" in res_malformed.data["raw_text"]
+    assert "error" in res_malformed.data

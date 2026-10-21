@@ -297,10 +297,10 @@ def create_preprocessed_copy(image: Image.Image, auto_deskew: bool = True, enhan
             cv_img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
             modified = True
 
-    # 3. Safe downsampling if image exceeds 3072px on longest side
+    # 3. Safe downsampling if image exceeds 2048px on longest side (optimal for Vision OCR & network transfer)
     max_dim = max(h, w)
-    if max_dim > 3072:
-        scale = 3072.0 / max_dim
+    if max_dim > 2048:
+        scale = 2048.0 / max_dim
         new_w, new_h = int(w * scale), int(h * scale)
         cv_img = cv2.resize(cv_img, (new_w, new_h), interpolation=cv2.INTER_AREA)
         modified = True

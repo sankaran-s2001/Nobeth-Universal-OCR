@@ -87,3 +87,47 @@ def test_non_destructive_preprocessing():
     original_pixels_after = np.array(original_img)
     assert np.array_equal(original_pixels_before, original_pixels_after)
     assert isinstance(processed_img, Image.Image)
+
+
+def test_detect_skew_angle_and_deskew_correction():
+    # 1. Create a synthetic document with horizontal text lines
+    img_arr = np.full((400, 600, 3), 255, dtype=np.uint8)
+    for y in range(60, 340, 40):
+        cv2.line(img_arr, (50, y), (550, y), (0, 0, 0), 3)
+
+    # 2. Known rotation (+5.0 degrees)
+    center = (300, 200)
+    rot_matrix = cv2.getRotationMatrix2D(center, 5.0, 1.0)
+    skewed_arr = cv2.warpAffine(img_arr, rot_matrix, (600, 400), borderValue=(255, 255, 255))
+    skewed_pil = Image.fromarray(skewed_arr)
+
+    # Snapshot of original pixels before preprocessing
+    skewed_pixels_before = np.array(skewed_pil).copy()
+
+    # 3. Detect skew on rotated image
+    gray = cv2.cvtColor(skewed_arr, cv2.COLOR_BGR2GRAY)
+    detected_angle = detect_skew_angle(gray)
+    assert abs(detected_angle) > 2.0
+
+    # 4. Correct via create_preprocessed_copy
+    corrected_pil, was_modified = create_preprocessed_copy(skewed_pil, auto_deskew=True)
+    assert was_modified is True
+    assert isinstance(corrected_pil, Image.Image)
+
+    # 5. Verify original image was not modified in place
+    assert np.array_equal(skewed_pixels_before, np.array(skewed_pil))
+
+    # Corrected image should have angle within small tolerance (<= 1.0 degree)
+    corrected_gray = cv2.cvtColor(np.array(corrected_pil), cv2.COLOR_RGB2GRAY)
+    final_angle = detect_skew_angle(corrected_gray)
+    assert abs(final_angle) <= 1.0
+
+    # 6. Already aligned image is not unnecessarily rotated
+    aligned_pil = Image.fromarray(img_arr)
+    aligned_copy, aligned_mod = create_preprocessed_copy(aligned_pil, auto_deskew=True, enhance_contrast=False)
+    assert aligned_mod is False
+
+    # 7. Blank or unsuitable images are handled safely
+    blank_pil = Image.new("RGB", (300, 300), color="white")
+    blank_copy, blank_mod = create_preprocessed_copy(blank_pil, auto_deskew=True)
+    assert isinstance(blank_copy, Image.Image)

@@ -1,7 +1,7 @@
 # Nobeth Universal OCR
 
 > **Extract. Understand. Structure.**  
-> A standalone, single-server document intelligence workstation powered by **Google Gemini 3.1 Flash-Lite** and **Streamlit**.
+> A standalone, single-server document intelligence workstation powered by **Google Gemini 3.1 Flash-Lite** (with automated **Gemini 3.5 Flash-Lite** failover resilience) and **Streamlit**.
 
 [![GitHub Release](https://img.shields.io/badge/Release-v1.0.0-blue.svg)](https://github.com/sankaran-s2001/Nobeth-Universal-OCR)
 [![Python Version](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-green.svg)](https://python.org)
@@ -9,7 +9,7 @@
 
 **Nobeth Universal OCR** is a modern, high-accuracy document intelligence workspace designed to extract and structure information from almost any image or document format without rigid, pre-defined templates.
 
-The application operates on a **universal two-stage architecture** combining Computer Vision and LLMs. First, it performs a source-faithful, verbatim extraction of all visible text, tables, and handwriting. Second, it dynamically infers the document type, parses the text into a clean JSON schema, and checks data provenance through exact-match traceability linkages.
+The application operates on a **universal two-stage architecture** combining Computer Vision and LLMs with automated high-availability failover. First, it performs a source-faithful, verbatim extraction of all visible text, tables, and handwriting. Second, it dynamically infers the document type, parses the text into a clean JSON schema, and checks data provenance through exact-match traceability linkages.
 
 ---
 
@@ -77,9 +77,12 @@ Use this application when you need to process layouts containing:
 - **Adaptive Deskew**: Detects contour orientations and rotates images horizontally if alignment issues exist.
 - **Verbatim OCR (Stage 1)**: Visual extraction preserving tables, symbols, and layout structure.
 - **Dynamic JSON Structuring (Stage 2)**: Dynamic schema inference mapping unstructured text into custom JSON.
+- **Automated Alternating Model Failover**: High-availability AI pipeline alternating between `gemini-3.1-flash-lite` (primary) and `gemini-3.5-flash-lite` (fallback) upon capacity spikes (503), timeouts (504 DEADLINE_EXCEEDED), rate limits (429), or network transient drops.
+- **Real-Time Live Countdown & Smooth Animated Progress**: Client-side tick-by-tick countdown timer (30s ➔ 0s) paired with a continuous smooth keyframe progress bar and shimmering light sweep during AI processing.
 - **Exact-Match Traceability**: Highlights data provenance by matching structured values back to the raw verbatim string.
 - **Interactive Workspaces**: Side-by-side editing panes for raw text and structured JSON with live syntax checking.
 - **Unified Exports**: Instantly download results as **JSON**, **CSV** (intelligent flattener), or **TXT** formats.
+- **Structured Terminal Telemetry**: Professional operation banners (`UPL-xxxx`, `OCR-xxxx`, `STR-xxxx`, `EXP-xxxx`) with microsecond execution timing and stage tracking.
 - **Self-Healing Launcher**: Automated dependency checkers, version compliance validation, port scanning, and instance re-use.
 
 ---
@@ -312,13 +315,14 @@ Structured values are checked against the verbatim text to confirm accuracy:
 | Layer | Technology | Purpose |
 | :--- | :--- | :--- |
 | **Frontend** | Streamlit (v1.46.0) | Multi-column layout and reactive workspaces. |
-| **Styling** | Vanilla CSS | Custom horizontal tabs and glassmorphism styling. |
-| **AI Layer** | `google-genai` (v2.16.0) | Communication with the Gemini API. |
-| **Model** | `gemini-3.1-flash-lite` | Vision extraction and structuring. |
+| **Styling** | Vanilla CSS | Custom horizontal tabs, animated progress bars, countdown timers, and glassmorphism styling. |
+| **AI Layer** | `google-genai` (v2.16.0) | Communication with Google Gemini API with timeout bounds and alternating model failover. |
+| **AI Models** | `gemini-3.1-flash-lite` (Primary)<br>`gemini-3.5-flash-lite` (Fallback) | Vision OCR extraction and JSON structuring with automatic alternating failover. |
 | **Vision Diagnostics** | OpenCV (`opencv-python-headless`) | Reads dimensions, contrast, blur, and skew. |
-| **PDF Renderer** | PyMuPDF (`fitz` v1.24.2) | PDF page rendering. |
-| **Environment** | `python-dotenv` | Config variable loading. |
-| **Testing** | `pytest` (v7.4.0) | Automated validation tests. |
+| **PDF Renderer** | PyMuPDF (`fitz` v1.24.2) | Multi-page PDF page rendering. |
+| **Observability** | Custom Telemetry (`utils/telemetry.py`) | Operation lifecycle banners, stage timing, and structured retry logs. |
+| **Environment** | `python-dotenv` | Configuration variable loading. |
+| **Testing** | `pytest` (v7.4.0) | 49 Automated validation, preprocessing, structuring, export, and failover tests. |
 
 ---
 
@@ -347,16 +351,30 @@ Nobeth-Universal-OCR/
 │   ├── __init__.py
 │   ├── export_service.py       # JSON stringifiers, CSV flattener, TXT export writer
 │   ├── extraction_service.py   # Orchestrator for Gemini Vision Stage 1 OCR
-│   ├── gemini_service.py       # Client for GenAI SDK with exponential backoffs
+│   ├── gemini_service.py       # Client for GenAI SDK with alternating model failover
 │   ├── preprocessing_service.py# OpenCV image diagnostic scoring and rotation deskewing
 │   └── structuring_service.py  # Orchestrator for Gemini JSON Stage 2 Structuring
+│
+├── ui/
+│   ├── __init__.py
+│   ├── components.py           # HTML component renderers, progress cards & banners
+│   └── theme.py                # Design system, CSS animations & countdown keyframes
+│
+├── utils/
+│   ├── __init__.py
+│   ├── file_utils.py           # File validation, size formatting, and sanitization
+│   ├── image_utils.py          # PIL and OpenCV image conversion helpers
+│   ├── telemetry.py            # High-precision execution timing and log formatters
+│   └── validation.py           # File type validation and JSON repair helpers
 │
 ├── tests/
 │   ├── __init__.py
 │   ├── test_exports.py         # Tabular list and scalar export tests
 │   ├── test_formats_and_pipeline.py # PDF page rendering and mock pipeline tests
+│   ├── test_model_fallback.py  # Alternating model failover and 504/503 retry tests
 │   ├── test_preprocessing.py   # Contrast, blur variance, and deskew checks
 │   ├── test_structuring.py     # Field traceability and numeric checks
+│   ├── test_telemetry.py       # Execution timer and format validation tests
 │   └── test_validation.py      # File type and JSON repair testing
 │
 └── sample_data/
@@ -381,7 +399,8 @@ Nobeth-Universal-OCR/
 | Variable | Required | Default | Purpose / Example |
 | :--- | :--- | :--- | :--- |
 | **`GEMINI_API_KEY`** | **Yes** | *None* | Google Gemini API credentials (`AIzaSy...`). |
-| **`GEMINI_MODEL`** | No | `gemini-3.1-flash-lite` | Target model for vision extraction and structuring. |
+| **`GEMINI_MODEL`** | No | `gemini-3.1-flash-lite` | Target primary model for vision extraction and structuring. |
+| **`GEMINI_FALLBACK_MODEL`** | No | `gemini-3.5-flash-lite` | Secondary fallback model for automated resilience upon spikes or timeouts. |
 | **`MAX_FILE_SIZE_MB`** | No | `50` | Maximum allowed file upload size. |
 
 ---
@@ -482,16 +501,28 @@ The test suite uses `pytest`. Run tests using the command below:
 pytest tests/ -v
 ```
 
-Tests verify image preprocessing, quality calculations, file type checks, PDF parsing, traceability logic, and JSON exports.
+The 49 automated unit tests verify:
+- **Preprocessing**: Contrast SD, Laplacian blur variance, and OpenCV rotation deskewing.
+- **Pipeline Formats**: File validation, PyMuPDF page rendering, and mock end-to-end pipelines.
+- **Model Failover & Resilience**: 504 deadline exceeded failover, 503 capacity spike failover, 429 quota recovery, alternating ping-pong sequence (`M1 -> M2 -> M1 -> M2`), and auth fail-fast handling.
+- **Structuring & Provenance**: Field traceability linkage, schema normalization, and numeric consistency.
+- **Telemetry**: Execution timer accuracy, microsecond conversion, and banner log formatting.
+- **Exports**: JSON serialization, tabular CSV flattening, and verbatim TXT creation.
 
 ---
 
-## 🧯 Error Handling
+## 🧯 Error Handling & High-Availability Resilience
 
-- **Invalid Uploads**: Triggers error banners for unsupported file types.
+- **Invalid Uploads**: Triggers clear, non-blocking error banners for unsupported file types or corrupted documents.
 - **Missing API Configuration**: Halts processing with instructions to add your key to `.env`.
-- **API Exceptions**: GenAI client implements 3 retries with exponential backoffs for transient errors.
-- **Syntax Errors**: Invalid edits in the JSON editor are flagged with syntax badges. Exports are disabled until resolved.
+- **Automated Alternating Model Failover**: If Gemini encounters high traffic demand (`503 UNAVAILABLE`), gateway timeouts (`504 DEADLINE_EXCEEDED`), rate limits (`429 RESOURCE_EXHAUSTED`), server errors (`502/500`), or network socket resets, the engine automatically alternates models:
+  - **Attempt 1**: Primary Model (`gemini-3.1-flash-lite`)
+  - **Attempt 2**: Fallback Model (`gemini-3.5-flash-lite`)
+  - **Attempt 3**: Primary Model (`gemini-3.1-flash-lite`)
+  - **Attempt 4**: Fallback Model (`gemini-3.5-flash-lite`)
+- **Fatal Authentication Fail-Fast**: If an API key is missing or invalid (`401 UNAUTHENTICATED`), the system halts immediately without retrying or switching models.
+- **Live Progress & Active Countdown**: The UI features a real-time 30s to 0s countdown timer and a smooth keyframe-animated progress bar with shimmering highlights, ensuring the user is never left with a static or frozen screen.
+- **Syntax Error Protection**: Hand-edited JSON syntax errors are flagged instantly with warning badges; export downloads are protected until syntax errors are resolved.
 
 ---
 
@@ -499,19 +530,32 @@ Tests verify image preprocessing, quality calculations, file type checks, PDF pa
 
 | Problem | Cause | Solution |
 | :--- | :--- | :--- |
-| **API Error / 401 Unauthorized** | Missing or incorrect API key. | Set a valid `GEMINI_API_KEY` in your `.env` file. |
+| **API Error / 401 Unauthorized** | Missing or incorrect API key. | Set a valid `GEMINI_API_KEY` in your `.env` file or Render environment variables. |
+| **503 High Demand / 504 Deadline** | Google Gemini regional server capacity spikes. | **Automatic**: The engine automatically fails over to `gemini-3.5-flash-lite` and alternates safely. No manual action needed. |
+| **Handshake / SSL Timeout** | Intermittent ISP or TLS socket delay. | Managed automatically by the 60s timeout guard and alternating failover retry loop. |
 | **ImportError: libGL.so.1** | Missing native GUI libraries in cloud Linux environment. | Verify that `opencv-python-headless` (and not GUI `opencv-python`) is in your `requirements.txt`. |
 | **JSON Export Disabled** | Hand-edited JSON in the workspace has syntax errors. | Edit the text to resolve syntax errors. A status banner will display the exact error line. |
 | **Venv creation failed on Windows** | Execution Policy restriction. | Run `run.bat` as Administrator, or run `Set-ExecutionPolicy -Scope Process Bypass` in PowerShell. |
 
 ---
 
-## ☁️ Deployment
+## ☁️ Deployment (Render Continuous Deployment)
 
-Deploy to Render (https://render.com/) with these parameters:
+Nobeth Universal OCR is designed to be 100% stateless and deploy seamlessly on cloud platforms like **Render** (https://render.com/).
+
+### Automated GitHub ➔ Render Continuous Deployment:
+1. When you push your updated codebase to GitHub (`git push origin main`), Render's webhook automatically detects the push.
+2. Render triggers an automated build using `requirements.txt` and restarts the service with zero downtime.
+
+### Render Service Settings:
+- **Environment**: `Python 3`
 - **Build Command**: `pip install -r requirements.txt`
 - **Start Command**: `streamlit run app.py --server.port $PORT --server.address 0.0.0.0`
-- **Variables**: `PYTHON_VERSION` = `3.11.7`, `GEMINI_API_KEY` = *[Your actual key]*
+- **Environment Variables**:
+  - `PYTHON_VERSION` = `3.11.7`
+  - `GEMINI_API_KEY` = *[Your Google Gemini API Key]*
+  - *(Optional)* `GEMINI_MODEL` = `gemini-3.1-flash-lite`
+  - *(Optional)* `GEMINI_FALLBACK_MODEL` = `gemini-3.5-flash-lite`
 
 ---
 

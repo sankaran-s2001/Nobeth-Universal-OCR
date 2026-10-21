@@ -784,5 +784,209 @@ div[data-testid="stAlert"] {
 .animate-entrance {
     animation: fadeInSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* ==========================================================================
+   10. PROGRESS WORKSPACE & REAL-TIME TIMING STYLES
+   ========================================================================== */
+.progress-panel-card {
+    background: rgba(13, 18, 30, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: var(--radius-lg);
+    padding: 1.15rem 1.35rem;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 24px -2px rgba(16, 185, 129, 0.18);
+    margin: 0.85rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+}
+
+.progress-title-text {
+    font-size: 0.86rem;
+    font-weight: 700;
+    color: #F8FAFC;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.progress-stage-desc {
+    font-size: 0.78rem;
+    color: #94A3B8;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.progress-spinner-ring {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(16, 185, 129, 0.2);
+    border-top-color: #34D399;
+    border-radius: 50%;
+    animation: spinRadar 0.75s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+@keyframes spinRadar {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+    margin-top: 0.75rem;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10B981 0%, #38BDF8 50%, #10B981 100%);
+    background-size: 200% 100%;
+    animation: shimmerSlide 1.8s infinite linear;
+    border-radius: 9999px;
+    transition: width 0.35s ease-out;
+}
+
+@keyframes smoothBarFill30s {
+    0% { width: 6%; }
+    15% { width: 32%; }
+    35% { width: 56%; }
+    55% { width: 74%; }
+    75% { width: 86%; }
+    90% { width: 93%; }
+    100% { width: 96%; }
+}
+
+.progress-bar-fill.active-streaming {
+    animation: smoothBarFill30s 30s cubic-bezier(0.12, 0.45, 0.25, 1) forwards, shimmerSlide 1.8s infinite linear !important;
+}
+
+.progress-bar-fill.completed-bar {
+    width: 100% !important;
+    background: linear-gradient(90deg, #10B981 0%, #34D399 100%) !important;
+    transition: width 0.4s ease-out;
+}
+
+.progress-panel-card.is-streaming {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 28px -2px rgba(16, 185, 129, 0.25);
+}
+
+@keyframes countdown30to0 {
+    0.00% { content: "30s"; }
+    3.33% { content: "29s"; }
+    6.66% { content: "28s"; }
+    10.00% { content: "27s"; }
+    13.33% { content: "26s"; }
+    16.66% { content: "25s"; }
+    20.00% { content: "24s"; }
+    23.33% { content: "23s"; }
+    26.66% { content: "22s"; }
+    30.00% { content: "21s"; }
+    33.33% { content: "20s"; }
+    36.66% { content: "19s"; }
+    40.00% { content: "18s"; }
+    43.33% { content: "17s"; }
+    46.66% { content: "16s"; }
+    50.00% { content: "15s"; }
+    53.33% { content: "14s"; }
+    56.66% { content: "13s"; }
+    60.00% { content: "12s"; }
+    63.33% { content: "11s"; }
+    66.66% { content: "10s"; }
+    70.00% { content: "9s"; }
+    73.33% { content: "8s"; }
+    76.66% { content: "7s"; }
+    80.00% { content: "6s"; }
+    83.33% { content: "5s"; }
+    86.66% { content: "4s"; }
+    90.00% { content: "3s"; }
+    93.33% { content: "2s"; }
+    96.66% { content: "1s"; }
+    99.00% { content: "0s"; }
+    100.00% { content: "Finishing..."; }
+}
+
+.nobeth-live-countdown::after {
+    content: "30s";
+    animation: countdown30to0 30s steps(1, end) forwards;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+}
+
+@keyframes shimmerSlide {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.timing-badge-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.22rem 0.6rem;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.32);
+    color: #34D399;
+    letter-spacing: 0.02em;
+}
+
+.timing-badge-muted {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94A3B8;
+}
+
+.status-feedback-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.15rem;
+    border-radius: var(--radius-md);
+    margin: 0.75rem 0;
+    font-size: 0.82rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+}
+
+.status-feedback-success {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #F8FAFC;
+}
+
+.status-feedback-error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #FCA5A5;
+}
+
+.export-timing-note {
+    font-size: 0.74rem;
+    color: var(--brand-emerald-light);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
 </style>
 """

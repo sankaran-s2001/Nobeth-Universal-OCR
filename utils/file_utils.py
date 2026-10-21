@@ -70,32 +70,47 @@ def detect_file_format(filename: str, file_bytes: Optional[bytes] = None) -> Tup
     detected_ext = ext
     detected_mime = MIME_MAP.get(ext, "application/octet-stream")
 
-    if file_bytes and len(file_bytes) >= 12:
+    if file_bytes and len(file_bytes) >= 4:
         header = file_bytes[:12]
+        matched_ext = None
+        matched_mime = None
+
         # Check PDF header
         if header.startswith(b"%PDF-"):
-            detected_ext = ".pdf"
-            detected_mime = "application/pdf"
+            matched_ext = ".pdf"
+            matched_mime = "application/pdf"
         # Check JPEG header
         elif header.startswith(b"\xff\xd8\xff"):
-            detected_ext = ".jpg" if ext not in [".jpg", ".jpeg"] else ext
-            detected_mime = "image/jpeg"
+            matched_ext = ".jpg" if ext not in [".jpg", ".jpeg"] else ext
+            matched_mime = "image/jpeg"
         # Check PNG header
         elif header.startswith(b"\x89PNG\r\n\x1a\n"):
-            detected_ext = ".png"
-            detected_mime = "image/png"
+            matched_ext = ".png"
+            matched_mime = "image/png"
         # Check WEBP
         elif header.startswith(b"RIFF") and b"WEBP" in file_bytes[:16]:
-            detected_ext = ".webp"
-            detected_mime = "image/webp"
+            matched_ext = ".webp"
+            matched_mime = "image/webp"
         # Check TIFF
         elif header.startswith(b"II*\x00") or header.startswith(b"MM\x00*"):
-            detected_ext = ".tiff" if ext not in [".tiff", ".tif"] else ext
-            detected_mime = "image/tiff"
+            matched_ext = ".tiff" if ext not in [".tiff", ".tif"] else ext
+            matched_mime = "image/tiff"
         # Check HEIC ftyp
-        elif b"ftyp" in header[4:8] and any(sig in file_bytes[:32] for sig in [b"heic", b"mif1", b"msf1", b"heix"]):
-            detected_ext = ".heic"
-            detected_mime = "image/heic"
+        elif len(header) >= 8 and b"ftyp" in header[4:8] and any(sig in file_bytes[:32] for sig in [b"heic", b"mif1", b"msf1", b"heix"]):
+            matched_ext = ".heic"
+            matched_mime = "image/heic"
+        # Check Windows Executable
+        elif header.startswith(b"MZ"):
+            matched_ext = ".exe"
+            matched_mime = "application/x-msdownload"
+
+        if matched_ext:
+            detected_ext = matched_ext
+            detected_mime = matched_mime
+        elif ext in SUPPORTED_EXTENSIONS:
+            # File claimed to be a supported format, but magic bytes mismatch
+            detected_ext = ".bin"
+            detected_mime = "application/octet-stream"
 
     is_supported = detected_ext in SUPPORTED_EXTENSIONS
     return detected_ext, detected_mime, is_supported

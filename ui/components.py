@@ -11,7 +11,7 @@ def clean_html(html_str: str) -> str:
     return "\n".join(line.strip() for line in html_str.strip().splitlines() if line.strip())
 
 
-def render_header(api_key_configured: bool, model_id: str, stage: str) -> str:
+def render_header(api_key_configured: bool, model_id: str, stage: str, is_fallback: bool = False) -> str:
     """Renders the top application brand navigation bar."""
     if not api_key_configured:
         status_html = '<span class="status-badge-chip status-badge-warning">● API Key Missing</span>'
@@ -25,6 +25,11 @@ def render_header(api_key_configured: bool, model_id: str, stage: str) -> str:
         status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Structured & Ready</span>'
     else:
         status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Ready</span>'
+
+    if is_fallback:
+        model_tag_html = f'<div class="model-tag-chip" style="border-color: rgba(56, 189, 248, 0.45); color: #38BDF8; background: rgba(14, 165, 233, 0.12);" title="Auto-failover model active">⚡ {model_id} (fallback)</div>'
+    else:
+        model_tag_html = f'<div class="model-tag-chip">{model_id}</div>'
 
     raw = f"""
 <div class="app-header-container animate-entrance">
@@ -46,7 +51,7 @@ def render_header(api_key_configured: bool, model_id: str, stage: str) -> str:
 </div>
 <div class="header-status-wrap">
 {status_html}
-<div class="model-tag-chip">{model_id}</div>
+{model_tag_html}
 </div>
 </div>
 """
@@ -162,10 +167,11 @@ Upload a document on the left and launch <strong>Gemini Vision Extraction</stron
     return clean_html(raw)
 
 
-def render_file_info_chip(filename: str, ext: str, size_str: str, num_pages: int) -> str:
-    """Renders the loaded file metadata card."""
+def render_file_info_chip(filename: str, ext: str, size_str: str, num_pages: int, prep_duration: Optional[str] = None) -> str:
+    """Renders the loaded file metadata card with optional measured preparation duration."""
     ext_clean = ext.upper().replace(".", "")
     page_text = f"{num_pages} Page" if num_pages == 1 else f"{num_pages} Pages"
+    status_label = f"Ready for OCR · {prep_duration}" if prep_duration else "Ready for OCR"
     raw = f"""
 <div class="file-info-chip-card animate-entrance">
 <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -183,7 +189,7 @@ def render_file_info_chip(filename: str, ext: str, size_str: str, num_pages: int
 <div class="file-meta-subtext">{ext_clean} · {size_str} · {page_text}</div>
 </div>
 </div>
-<span class="status-badge-chip status-badge-ready" style="font-size: 0.7rem; padding: 0.2rem 0.55rem;">Ready for OCR</span>
+<span class="status-badge-chip status-badge-ready" style="font-size: 0.7rem; padding: 0.2rem 0.55rem;">{status_label}</span>
 </div>
 """
     return clean_html(raw)
@@ -249,10 +255,15 @@ def render_readiness_panel(report: ReadinessReport) -> str:
     return clean_html(raw)
 
 
-def render_extraction_header(doc_type: str, confidence_level: str, model_id: str) -> str:
+def render_extraction_header(doc_type: str, confidence_level: str, model_id: str, is_fallback: bool = False) -> str:
     """Renders the AI metadata toolbar above the extraction editors."""
     doc_type_clean = doc_type.replace("_", " ").title()
     conf_class = "status-badge-ready" if confidence_level == "HIGH" else "status-badge-processing" if confidence_level == "MEDIUM" else "status-badge-warning"
+
+    if is_fallback:
+        model_badge = f'<span class="model-tag-chip" style="border-color: rgba(56, 189, 248, 0.45); color: #38BDF8; background: rgba(14, 165, 233, 0.12);" title="Auto-failover model active">⚡ {model_id}</span>'
+    else:
+        model_badge = f'<span class="model-tag-chip">{model_id}</span>'
 
     raw = f"""
 <div class="meta-chip-toolbar animate-entrance">
@@ -261,6 +272,7 @@ def render_extraction_header(doc_type: str, confidence_level: str, model_id: str
 <span class="doc-type-pill">{doc_type_clean}</span>
 </div>
 <div style="display: flex; align-items: center; gap: 0.5rem;">
+{model_badge}
 <span class="status-badge-chip {conf_class}">Confidence: {confidence_level}</span>
 </div>
 </div>
@@ -276,4 +288,76 @@ def render_json_validation_badge(is_valid: bool, val_msg: Optional[str] = None) 
     else:
         msg = val_msg or "Syntax Error"
         raw = f'<div style="font-size: 0.78rem; font-weight: 600; color: var(--status-danger); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.35rem;"><span style="font-size: 0.9rem;">⚠</span> {msg}</div>'
+    return clean_html(raw)
+
+
+def render_progress_card(
+    title: str,
+    stage_label: str,
+    progress_ratio: Optional[float] = None,
+    elapsed_str: Optional[str] = None,
+    details: Optional[str] = None,
+) -> str:
+    """
+    Renders an interactive animated progress card with real-time stage description,
+    smooth keyframe-animated progress bar, and real-time live seconds countdown timer.
+    """
+    is_active = (progress_ratio is None or progress_ratio < 1.0)
+
+    if is_active:
+        card_class = "progress-panel-card is-streaming animate-entrance"
+        bar_class = "progress-bar-fill active-streaming"
+        width_style = ""
+        timing_html = '<span class="timing-badge-chip">⏱ <span class="nobeth-live-countdown"></span> <span style="opacity: 0.65; font-size: 0.66rem; font-weight: 500;">remaining</span></span>'
+    else:
+        card_class = "progress-panel-card animate-entrance"
+        bar_class = "progress-bar-fill completed-bar"
+        width_style = "width: 100%;"
+        timing_label = elapsed_str or "100%"
+        timing_html = f'<span class="timing-badge-chip">⏱ {timing_label}</span>'
+
+    details_html = f'<div style="font-size: 0.72rem; color: #64748B; margin-top: 0.35rem;">{details}</div>' if details else ""
+    bar_style_attr = f'style="{width_style}"' if width_style else ""
+
+    raw = f"""
+<div class="{card_class}">
+  <div class="progress-header-row">
+    <div class="progress-title-text">
+      <span class="progress-spinner-ring"></span>
+      <span>{title}</span>
+    </div>
+    {timing_html}
+  </div>
+  <div class="progress-stage-desc">
+    <span style="color: #34D399;">●</span>
+    <span>{stage_label}</span>
+  </div>
+  <div class="progress-bar-track">
+    <div class="{bar_class}" {bar_style_attr}></div>
+  </div>
+  {details_html}
+</div>
+"""
+    return clean_html(raw)
+
+
+def render_status_banner(
+    message: str,
+    is_error: bool = False,
+    duration_str: Optional[str] = None,
+) -> str:
+    """Renders a structured, visually aligned success or error notification banner."""
+    status_class = "status-feedback-error" if is_error else "status-feedback-success"
+    icon = "❌" if is_error else "✓"
+    timing_html = f'<span class="timing-badge-chip">⏱ {duration_str}</span>' if duration_str else ""
+
+    raw = f"""
+<div class="status-feedback-banner {status_class} animate-entrance">
+  <div style="display: flex; align-items: center; gap: 0.6rem;">
+    <span>{icon}</span>
+    <span>{message}</span>
+  </div>
+  {timing_html}
+</div>
+"""
     return clean_html(raw)

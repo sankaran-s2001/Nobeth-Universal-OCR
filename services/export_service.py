@@ -4,7 +4,7 @@ import csv
 import io
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from models.schemas import ExportBundle
 
 
@@ -60,6 +60,11 @@ def export_to_csv(data: Dict[str, Any]) -> str:
         # We have at least one array of objects/rows to tabularize
         # Primary array is the first array or largest array
         primary_key, primary_list = max(array_fields, key=lambda item: len(item[1]))
+
+        # Preserve any non-primary arrays as serialized scalar columns
+        for k, v in array_fields:
+            if k != primary_key:
+                scalar_fields[k] = json.dumps(v, ensure_ascii=False)
 
         # Collect columns from items
         item_columns = []
@@ -147,16 +152,39 @@ def create_export_bundle(
     base_filename: str,
     document_type: str = "unknown",
     confidence: str = "HIGH",
+    op_id: Optional[str] = None,
 ) -> ExportBundle:
-    """Generates all export formats into an ExportBundle."""
+    """Generates all export formats into an ExportBundle and measures generation duration."""
+    import time
+    t0 = time.perf_counter()
+
+    t_json = time.perf_counter()
     json_str = export_to_json(structured_data)
+    json_dur = time.perf_counter() - t_json
+
+    t_csv = time.perf_counter()
     csv_str = export_to_csv(structured_data)
+    csv_dur = time.perf_counter() - t_csv
+
+    t_txt = time.perf_counter()
     txt_str = export_to_txt(
         raw_text=raw_text,
         filename=base_filename,
         document_type=document_type,
         confidence=confidence,
     )
+    txt_dur = time.perf_counter() - t_txt
+
+    total_dur = time.perf_counter() - t0
+
+    if op_id:
+        from utils.telemetry import log_stage_success, format_duration
+        log_stage_success(
+            op_id,
+            "EXPORT GENERATION",
+            total_dur,
+            f"JSON ({format_duration(json_dur)}), CSV ({format_duration(csv_dur)}), TXT ({format_duration(txt_dur)})",
+        )
 
     clean_base = base_filename.rsplit(".", 1)[0] if "." in base_filename else base_filename
 

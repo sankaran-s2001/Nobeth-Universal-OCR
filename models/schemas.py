@@ -66,6 +66,7 @@ class RawExtractionResult(BaseModel):
     pages: List[PageExtraction] = Field(default_factory=list)
     page_count: int = Field(default=1, ge=1)
     notes: Optional[str] = Field(default=None)
+    model_used: str = Field(default="gemini-3.1-flash-lite", description="Gemini model that executed the extraction")
 
 
 class FieldTrace(BaseModel):
@@ -85,6 +86,7 @@ class StructuredExtractionResult(BaseModel):
     confidence_level: ConfidenceLevel = Field(default=ConfidenceLevel.HIGH)
     is_valid: bool = Field(default=True)
     validation_message: Optional[str] = None
+    model_used: str = Field(default="gemini-3.1-flash-lite", description="Gemini model that executed the structuring")
 
 
 class ExportBundle(BaseModel):
