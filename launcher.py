@@ -632,6 +632,12 @@ def main():
             webbrowser.open(f"http://localhost:{run_port}")
         except Exception:
             pass
+        print("Application is live in your browser.")
+        print("Press Enter to close this launcher window...")
+        try:
+            input()
+        except Exception:
+            pass
         sys.exit(0)
 
     # Validate application entrypoint exists
