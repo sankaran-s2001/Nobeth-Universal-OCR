@@ -129,36 +129,38 @@ div[data-testid="column"]:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.85rem 1.4rem;
-    background: var(--bg-surface-1);
+    padding: 1.15rem 1.85rem;
+    background: linear-gradient(135deg, rgba(20, 27, 44, 0.90) 0%, rgba(15, 23, 42, 0.95) 100%);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid rgba(255, 255, 255, 0.09);
     border-radius: var(--radius-lg);
-    margin-bottom: 1.1rem;
-    box-shadow: var(--shadow-md);
+    margin-bottom: 1.35rem;
+    box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    min-height: 104px;
 }
 
 .brand-identity-wrap {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 1.25rem;
 }
 
 .brand-logo-icon {
-    width: 50px;
-    height: 50px;
+    width: 88px;
+    height: 88px;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(14, 165, 233, 0.2) 100%);
     border: 1px solid var(--border-emerald);
     border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 16px -2px rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 20px -2px rgba(16, 185, 129, 0.35);
+    flex-shrink: 0;
 }
 
 .brand-title-text {
-    font-size: 1.3rem;
+    font-size: 1.75rem;
     font-weight: 800;
     letter-spacing: -0.03em;
     background: linear-gradient(135deg, #FFFFFF 40%, #94A3B8 100%);
@@ -173,37 +175,37 @@ div[data-testid="column"]:hover {
     background: var(--brand-emerald-subtle);
     border: 1px solid var(--border-emerald);
     color: var(--brand-emerald-light);
-    font-size: 0.68rem;
+    font-size: 0.76rem;
     font-weight: 700;
-    padding: 0.15rem 0.55rem;
+    padding: 0.2rem 0.65rem;
     border-radius: var(--radius-full);
-    margin-left: 0.5rem;
+    margin-left: 0.65rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     vertical-align: middle;
 }
 
 .brand-tagline-text {
-    font-size: 0.78rem;
+    font-size: 0.86rem;
     color: var(--text-muted);
     font-weight: 400;
-    margin: 0;
+    margin-top: 0.25rem;
     letter-spacing: 0.01em;
 }
 
 .header-status-wrap {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
 }
 
 .status-badge-chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.3rem 0.85rem;
+    gap: 0.5rem;
+    padding: 0.38rem 0.95rem;
     border-radius: var(--radius-full);
-    font-size: 0.76rem;
+    font-size: 0.80rem;
     font-weight: 600;
     letter-spacing: 0.02em;
 }
@@ -228,11 +230,11 @@ div[data-testid="column"]:hover {
 
 .model-tag-chip {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.76rem;
     color: var(--text-muted);
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid var(--border-subtle);
-    padding: 0.25rem 0.65rem;
+    padding: 0.32rem 0.75rem;
     border-radius: var(--radius-sm);
 }
 
@@ -993,14 +995,14 @@ div[data-testid="stAlert"] {
    22. OFFICIAL NOBETH ANALYTICS LOGO & BRANDING
    ========================================================================== */
 .nobeth-official-logo {
-    width: 50px;
-    height: 50px;
+    width: 88px;
+    height: 88px;
     object-fit: contain;
-    border-radius: 9px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 4px;
     flex-shrink: 0;
 }
 

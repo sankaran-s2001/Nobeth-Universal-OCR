@@ -657,7 +657,7 @@ def test_nobeth_logo_asset_and_visibility():
         theme_css = f.read()
 
     assert ".nobeth-official-logo" in theme_css
-    assert "50px" in theme_css
+    assert "88px" in theme_css
     assert "object-fit: contain" in theme_css
 
 

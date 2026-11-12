@@ -71,7 +71,7 @@ def render_header(api_key_configured: bool, model_id: str, stage: str, is_fallba
         logo_html = f'<img src="data:image/png;base64,{logo_b64}" alt="Nobeth Analytics" class="nobeth-official-logo" />'
     else:
         logo_html = """<div class="brand-logo-icon">
-<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M2 17L12 22L22 17" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M2 12L12 17L22 12" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -80,7 +80,7 @@ def render_header(api_key_configured: bool, model_id: str, stage: str, is_fallba
 
     raw = f"""
 <div class="app-header-container animate-entrance">
-<div class="brand-identity-wrap" style="display: flex; align-items: center; gap: 0.85rem;">
+<div class="brand-identity-wrap">
 {logo_html}
 <div>
 <div style="display: flex; align-items: center;">
