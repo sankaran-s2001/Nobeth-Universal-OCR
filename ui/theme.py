@@ -146,8 +146,8 @@ div[data-testid="column"]:hover {
 }
 
 .brand-logo-icon {
-    width: 38px;
-    height: 38px;
+    width: 50px;
+    height: 50px;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(14, 165, 233, 0.2) 100%);
     border: 1px solid var(--border-emerald);
     border-radius: var(--radius-md);
@@ -987,6 +987,116 @@ div[data-testid="stAlert"] {
     display: flex;
     align-items: center;
     gap: 0.35rem;
+}
+
+/* ==========================================================================
+   22. OFFICIAL NOBETH ANALYTICS LOGO & BRANDING
+   ========================================================================== */
+.nobeth-official-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    border-radius: 9px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 3px;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   23. BULK IMAGE BATCH PROCESSING DASHBOARD & CARDS
+   ========================================================================== */
+.batch-summary-card {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.batch-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+    gap: 0.65rem;
+    margin: 1rem 0;
+}
+
+.batch-stat-box {
+    background: rgba(20, 27, 44, 0.85);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 0.4rem;
+    text-align: center;
+}
+
+.batch-stat-val {
+    font-size: 1.35rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.batch-stat-label {
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+.batch-current-file-box {
+    background: rgba(14, 165, 233, 0.08);
+    border: 1px solid rgba(14, 165, 233, 0.25);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    margin: 1rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.batch-file-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #F8FAFC;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.batch-stage-chip {
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.batch-result-card {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.batch-result-card:hover {
+    border-color: var(--border-medium);
+    background: rgba(20, 27, 44, 0.95);
 }
 </style>
 """

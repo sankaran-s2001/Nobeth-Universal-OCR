@@ -2,8 +2,35 @@
 Reusable visual UI components for Nobeth Universal OCR.
 """
 
+import base64
+import inspect
+import os
 from typing import Optional
+import streamlit as st
 from models.schemas import MetricStatus, ReadinessReport, ReadinessStatus
+
+_OFFICIAL_LOGO_BASE64: Optional[str] = None
+
+
+def get_nobeth_logo_base64() -> Optional[str]:
+    """Retrieves and caches the base64 data URI of the official Nobeth Analytics logo."""
+    global _OFFICIAL_LOGO_BASE64
+    if _OFFICIAL_LOGO_BASE64 is not None:
+        return _OFFICIAL_LOGO_BASE64
+
+    candidates = [
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "assets", "nobeth-analytics.png"),
+        os.path.join("static", "assets", "nobeth-analytics.png"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, "rb") as f:
+                    _OFFICIAL_LOGO_BASE64 = base64.b64encode(f.read()).decode("utf-8")
+                    return _OFFICIAL_LOGO_BASE64
+            except Exception:
+                pass
+    return None
 
 
 def clean_html(html_str: str) -> str:
@@ -12,7 +39,7 @@ def clean_html(html_str: str) -> str:
 
 
 def render_header(api_key_configured: bool, model_id: str, stage: str, is_fallback: bool = False) -> str:
-    """Renders the top application brand navigation bar."""
+    """Renders the top application brand navigation bar with the official Nobeth Analytics logo."""
     if not api_key_configured:
         status_html = '<span class="status-badge-chip status-badge-warning">● API Key Missing</span>'
     elif stage == "EMPTY":
@@ -23,6 +50,14 @@ def render_header(api_key_configured: bool, model_id: str, stage: str, is_fallba
         status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Raw Extracted</span>'
     elif stage == "STRUCTURED_READY":
         status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Structured & Ready</span>'
+    elif stage == "BULK_EMPTY":
+        status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Bulk Engine Ready</span>'
+    elif stage == "BULK_QUEUED":
+        status_html = '<span class="status-badge-chip status-badge-processing"><span class="status-dot-pulse" style="background:#0EA5E9; box-shadow:0 0 8px #0EA5E9;"></span>Batch Queued</span>'
+    elif stage == "BULK_PROCESSING":
+        status_html = '<span class="status-badge-chip status-badge-processing"><span class="status-dot-pulse" style="background:#F59E0B; box-shadow:0 0 8px #F59E0B;"></span>Processing Queue...</span>'
+    elif stage == "BULK_COMPLETED":
+        status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Batch Complete</span>'
     else:
         status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Ready</span>'
 
@@ -31,16 +66,22 @@ def render_header(api_key_configured: bool, model_id: str, stage: str, is_fallba
     else:
         model_tag_html = f'<div class="model-tag-chip">{model_id}</div>'
 
-    raw = f"""
-<div class="app-header-container animate-entrance">
-<div class="brand-identity-wrap">
-<div class="brand-logo-icon">
+    logo_b64 = get_nobeth_logo_base64()
+    if logo_b64:
+        logo_html = f'<img src="data:image/png;base64,{logo_b64}" alt="Nobeth Analytics" class="nobeth-official-logo" />'
+    else:
+        logo_html = """<div class="brand-logo-icon">
 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#34D399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M2 17L12 22L22 17" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 <path d="M2 12L12 17L22 12" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-</div>
+</div>"""
+
+    raw = f"""
+<div class="app-header-container animate-entrance">
+<div class="brand-identity-wrap" style="display: flex; align-items: center; gap: 0.85rem;">
+{logo_html}
 <div>
 <div style="display: flex; align-items: center;">
 <span class="brand-title-text">NOBETH</span>
@@ -361,3 +402,222 @@ def render_status_banner(
 </div>
 """
     return clean_html(raw)
+
+
+def render_batch_summary_card(
+    total_selected: int,
+    valid_count: int,
+    unsupported_count: int,
+    invalid_count: int,
+    total_size_str: str,
+) -> str:
+    """Renders the initial pre-flight batch summary card before processing starts."""
+    raw = f"""
+<div class="batch-summary-card animate-entrance">
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.75rem;">
+    <div>
+      <span style="font-size: 0.95rem; font-weight: 700; color: #F8FAFC;">📚 Batch Upload Summary</span>
+      <div style="font-size: 0.75rem; color: #94A3B8; margin-top: 0.15rem;">Review file readiness before initiating sequential execution</div>
+    </div>
+    <span class="status-badge-chip status-badge-ready" style="font-size: 0.75rem;">Sequential Pipeline</span>
+  </div>
+  <div class="batch-stats-grid">
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #38BDF8;">{total_selected}</div>
+      <div class="batch-stat-label">Total Files</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #34D399;">{valid_count}</div>
+      <div class="batch-stat-label">Valid Images</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #F59E0B;">{unsupported_count}</div>
+      <div class="batch-stat-label">Unsupported</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #EF4444;">{invalid_count}</div>
+      <div class="batch-stat-label">Invalid</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="font-size: 1.1rem; color: #CBD5E1;">{total_size_str}</div>
+      <div class="batch-stat-label">Total Size</div>
+    </div>
+  </div>
+</div>
+"""
+    return clean_html(raw)
+
+
+def render_batch_dashboard_metrics(
+    total: int,
+    completed: int,
+    successful: int,
+    partial: int,
+    failed: int,
+    skipped: int,
+    elapsed_str: str,
+    avg_str: str,
+    eta_str: str,
+) -> str:
+    """Renders real-time live batch processing metrics cards."""
+    remaining = max(0, total - completed)
+    raw = f"""
+<div class="batch-stats-grid animate-entrance" style="margin-top: 0.25rem;">
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="color: #F8FAFC;">{completed}/{total}</div>
+    <div class="batch-stat-label">Progress</div>
+  </div>
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="color: #34D399;">{successful}</div>
+    <div class="batch-stat-label">Successful</div>
+  </div>
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="color: #38BDF8;">{partial}</div>
+    <div class="batch-stat-label">Partial</div>
+  </div>
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="color: #EF4444;">{failed}</div>
+    <div class="batch-stat-label">Failed</div>
+  </div>
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="color: #94A3B8;">{remaining}</div>
+    <div class="batch-stat-label">Remaining</div>
+  </div>
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="font-size: 1.1rem; color: #F59E0B;">{elapsed_str}</div>
+    <div class="batch-stat-label">Elapsed</div>
+  </div>
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="font-size: 1.1rem; color: #CBD5E1;">{avg_str}</div>
+    <div class="batch-stat-label">Avg / Image</div>
+  </div>
+  <div class="batch-stat-box">
+    <div class="batch-stat-val" style="font-size: 1.1rem; color: #38BDF8;">{eta_str}</div>
+    <div class="batch-stat-label">Est. Remaining</div>
+  </div>
+</div>
+"""
+    return clean_html(raw)
+
+
+def render_batch_current_file(
+    file_num: int,
+    total: int,
+    filename: str,
+    stage_label: str,
+    model_name: Optional[str] = None,
+) -> str:
+    """Renders the banner highlighting the file actively being processed."""
+    model_chip = f'<span class="model-tag-chip" style="font-size: 0.68rem; padding: 2px 7px;">⚡ {model_name}</span>' if model_name else ""
+    raw = f"""
+<div class="batch-current-file-box animate-entrance">
+  <div class="batch-file-title">
+    <span class="status-dot-pulse" style="background: #38BDF8; box-shadow: 0 0 8px #38BDF8;"></span>
+    <span>Processing image {file_num} of {total}: <strong style="color: #38BDF8;">{filename}</strong></span>
+  </div>
+  <div style="display: flex; align-items: center; gap: 0.5rem;">
+    {model_chip}
+    <span class="batch-stage-chip">{stage_label}</span>
+  </div>
+</div>
+"""
+    return clean_html(raw)
+
+
+def render_batch_completion_summary(
+    total: int,
+    successful: int,
+    partial: int,
+    failed: int,
+    skipped: int,
+    duration_str: str,
+    zip_filename: str,
+) -> str:
+    """Renders the final completion summary card for a finished batch."""
+    is_flawless = (failed == 0 and partial == 0 and skipped == 0)
+    badge_class = "status-badge-ready" if is_flawless else "status-badge-processing"
+    badge_text = "✓ 100% Successful" if is_flawless else "Batch Completed"
+
+    raw = f"""
+<div class="batch-summary-card animate-entrance" style="border-color: rgba(16, 185, 129, 0.45); background: rgba(13, 18, 30, 0.95);">
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.75rem;">
+    <div>
+      <span style="font-size: 1.05rem; font-weight: 700; color: #F8FAFC;">🎉 Batch Processing Completed</span>
+      <div style="font-size: 0.78rem; color: #94A3B8; margin-top: 0.2rem;">Total execution duration: <strong style="color: #34D399;">{duration_str}</strong></div>
+    </div>
+    <span class="status-badge-chip {badge_class}" style="font-size: 0.78rem;">{badge_text}</span>
+  </div>
+  <div class="batch-stats-grid">
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #F8FAFC;">{total}</div>
+      <div class="batch-stat-label">Total Files</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #34D399;">{successful}</div>
+      <div class="batch-stat-label">Successful</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #38BDF8;">{partial}</div>
+      <div class="batch-stat-label">Partial</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #EF4444;">{failed}</div>
+      <div class="batch-stat-label">Failed</div>
+    </div>
+    <div class="batch-stat-box">
+      <div class="batch-stat-val" style="color: #94A3B8;">{skipped}</div>
+      <div class="batch-stat-label">Skipped</div>
+    </div>
+  </div>
+  <div style="font-size: 0.78rem; color: #94A3B8; margin-top: 0.85rem; display: flex; align-items: center; gap: 0.4rem;">
+    <span>📦 Archive ready:</span>
+    <span style="font-family: 'JetBrains Mono', monospace; color: #38BDF8;">{zip_filename}</span>
+  </div>
+</div>
+"""
+    return clean_html(raw)
+
+
+def style_batch_table(df):
+    """
+    Applies consistent status-based visual row styling across live and completed batch tables.
+    - SUCCESS: subtle grey/slate background for completed tracking
+    - SUCCESS_REVIEWED: subtle grey/slate with human-review indication
+    - PROCESSING: distinct soft cyan/teal highlight
+    - RETRYING: distinct soft blue/indigo highlight
+    - FAILED / INVALID: soft red background
+    - PARTIAL: soft amber background
+    - QUEUED / VALID: normal dark background with muted text
+    - SKIPPED / UNSUPPORTED: muted neutral background
+    """
+    def _row_style(row):
+        status = str(row.get("Status", "")).upper()
+        if status in ["SUCCESS", "COMPLETED"]:
+            style = "background-color: rgba(255, 255, 255, 0.06); color: #E2E8F0;"
+        elif status == "SUCCESS_REVIEWED":
+            style = "background-color: rgba(56, 189, 248, 0.08); color: #E0F2FE; font-weight: 500;"
+        elif status == "PROCESSING":
+            style = "background-color: rgba(14, 165, 233, 0.22); color: #38BDF8; font-weight: 600;"
+        elif status == "RETRYING":
+            style = "background-color: rgba(99, 102, 241, 0.22); color: #A5B4FC; font-weight: 600;"
+        elif status in ["FAILED", "INVALID"]:
+            style = "background-color: rgba(239, 68, 68, 0.18); color: #FCA5A5; font-weight: 500;"
+        elif status == "PARTIAL":
+            style = "background-color: rgba(245, 158, 11, 0.18); color: #FCD34D; font-weight: 500;"
+        elif status in ["SKIPPED", "UNSUPPORTED"]:
+            style = "background-color: rgba(100, 116, 139, 0.10); color: #94A3B8;"
+        else:
+            style = "background-color: transparent; color: #94A3B8;"
+        return [style] * len(row)
+
+    if hasattr(df, "style"):
+        return df.style.apply(_row_style, axis=1)
+    return df
+
+
+def width_kw(is_stretch: bool = True) -> dict:
+    """Returns width='stretch' if supported by current Streamlit, else use_container_width=True."""
+    params = inspect.signature(st.button).parameters
+    if "width" in params:
+        return {"width": "stretch" if is_stretch else "content"}
+    return {"use_container_width": is_stretch}

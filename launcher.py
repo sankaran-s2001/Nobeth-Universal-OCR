@@ -539,6 +539,10 @@ def start_streamlit_server(
         entrypoint,
         "--server.port",
         str(port),
+        "--server.address",
+        "0.0.0.0",
+        "--server.headless",
+        "true",
         "--server.fileWatcherType",
         "poll",
         "--server.maxUploadSize",
@@ -678,7 +682,8 @@ def main():
     log_step(5, "Configuration (.env)", "VALID", "Key configured")
 
     # Step 6: Network Port
-    port = find_free_port(8501)
+    env_port = os.environ.get("PORT")
+    port = int(env_port) if env_port and env_port.isdigit() else find_free_port(8501)
     log_step(6, "Network port", "READY", f"Port {port}")
 
     # Step 7: Streamlit Server
