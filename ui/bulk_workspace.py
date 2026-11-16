@@ -178,7 +178,7 @@ def render_bulk_images_workspace(api_key_configured: bool, active_model_id: str,
                 "Filename": r.original_filename,
                 "Status": r.status.value,
                 "Document Type": r.document_type,
-                "Model": r.model_used or "-",
+                "Engine": "OCR Extraction AI" if r.model_used else "-",
                 "OCR Time": format_duration(r.ocr_duration) if r.ocr_duration else "-",
                 "Structuring Time": format_duration(r.structuring_duration) if r.structuring_duration else "-",
                 "Total Time": format_duration(r.total_duration) if r.total_duration else "-",
@@ -196,7 +196,7 @@ def render_bulk_images_workspace(api_key_configured: bool, active_model_id: str,
                     col_info, col_dls = st.columns([1, 1], gap="medium")
                     with col_info:
                         st.markdown(f"**Document Type:** `{item.document_type}` | **Confidence:** `{item.confidence}`")
-                        st.markdown(f"**Model Used:** `{item.model_used}` | **Quality Score:** `{item.readiness_score or 0.0:.0f}%`")
+                        st.markdown(f"**Engine:** `OCR Extraction AI` | **Quality Score:** `{item.readiness_score or 0.0:.0f}%`")
                         if item.is_reviewed:
                             st.markdown(f"**Review Status:** `✓ Human-Reviewed` (Revision `{item.review_count}` | {item.last_modified_at or 'updated'})")
                         st.markdown(f"**Timings:** OCR: `{format_duration(item.ocr_duration or 0.0)}` | Structuring: `{format_duration(item.structuring_duration or 0.0)}` | Total: `{format_duration(item.total_duration or 0.0)}`")
@@ -423,7 +423,7 @@ def render_bulk_images_workspace(api_key_configured: bool, active_model_id: str,
                 <div class="empty-state-title">Bulk Image Document Intelligence</div>
                 <div class="empty-state-desc">
                     Select <strong>Multiple Images</strong> or upload an entire <strong>Folder</strong> above.<br/>
-                    All documents will be processed sequentially through Gemini Vision OCR & Dynamic JSON Structuring.
+                    All documents will be processed sequentially through OCR Extraction AI & Dynamic JSON Structuring.
                 </div>
             </div>
             """,

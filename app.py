@@ -374,13 +374,13 @@ if is_single_mode:
                                 new_m = meta.get("new_model", active_display_model)
                                 st.session_state.active_model = new_m
                                 st.session_state.is_fallback_active = True
-                                lbl = f"Switched to fallback model {new_m} (high demand on primary)..."
+                                lbl = "Switching to secondary failover engine (high demand on primary)..."
                             elif stage == "PREPARING":
                                 lbl = "Preparing document pages..."
                             elif stage == "PAGE_START":
                                 lbl = f"Processing page {cur_p} of {tot_p}..."
                             elif stage == "CALLING_VISION":
-                                lbl = f"Waiting for Gemini Vision response{page_tag}..."
+                                lbl = f"Waiting for OCR Extraction AI response{page_tag}..."
                             elif stage == "PARSING_RESPONSE":
                                 lbl = f"Processing extraction response{page_tag}..."
                             elif stage == "PAGE_COMPLETE":
@@ -388,17 +388,15 @@ if is_single_mode:
                             elif stage == "FINALIZING":
                                 lbl = "Finalizing verbatim extracted text..."
                             else:
-                                lbl = "Analyzing document with Gemini Vision..."
+                                lbl = "Analyzing document with OCR Extraction AI..."
 
-                            cur_m = st.session_state.get("active_model", configured_model_id)
-                            fb_tag = " (Auto-Failover Active)" if st.session_state.get("is_fallback_active", False) else ""
                             progress_slot.markdown(
                                 render_progress_card(
                                     title="Stage 1: Vision OCR Extraction",
                                     stage_label=lbl,
                                     progress_ratio=ratio,
                                     elapsed_str=format_duration(timer.elapsed()),
-                                    details=f"Target Model: {cur_m}{fb_tag} · Zero Domain Assumptions",
+                                    details="Engine: OCR Extraction AI · Zero Domain Assumptions",
                                 ),
                                 unsafe_allow_html=True,
                             )
@@ -446,7 +444,7 @@ if is_single_mode:
                             st.rerun()
                 else:
                     if extract_placeholder.button(
-                        "🚀 Run Gemini Vision Extraction ➔",
+                        "🚀 Run OCR Extraction AI ➔",
                         type="primary",
                         key="btn_run_vision_extraction",
                         **width_kw(),
@@ -543,11 +541,11 @@ if is_single_mode:
                                 new_m = meta.get("new_model", active_display_model)
                                 st.session_state.active_model = new_m
                                 st.session_state.is_fallback_active = True
-                                lbl = f"Switched to fallback model {new_m} (high demand on primary)..."
+                                lbl = "Switching to secondary failover engine (high demand on primary)..."
                             elif stage == "PREPARING_TEXT":
                                 lbl = "Preparing reviewed raw document text..."
                             elif stage == "SENDING_PROMPT":
-                                lbl = "Waiting for Gemini dynamic structuring response..."
+                                lbl = "Waiting for OCR dynamic structuring response..."
                             elif stage == "PARSING_JSON":
                                 lbl = "Parsing and validating JSON schema..."
                             elif stage == "EXTRACTING_TRACEABILITY":
@@ -557,15 +555,13 @@ if is_single_mode:
                             else:
                                 lbl = "Structuring document..."
 
-                            cur_m = st.session_state.get("active_model", configured_model_id)
-                            fb_tag = " (Auto-Failover Active)" if st.session_state.get("is_fallback_active", False) else ""
                             progress_slot.markdown(
                                 render_progress_card(
                                     title="Stage 2: Dynamic JSON Structuring",
                                     stage_label=lbl,
                                     progress_ratio=ratio,
                                     elapsed_str=format_duration(timer.elapsed()),
-                                    details=f"Target Model: {cur_m}{fb_tag} · Zero Hallucination · Preserving Exact Values & Codes",
+                                    details="Engine: OCR Extraction AI · Zero Hallucination · Preserving Exact Values & Codes",
                                 ),
                                 unsafe_allow_html=True,
                             )

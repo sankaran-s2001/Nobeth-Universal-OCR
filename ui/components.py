@@ -62,9 +62,9 @@ def render_header(api_key_configured: bool, model_id: str, stage: str, is_fallba
         status_html = '<span class="status-badge-chip status-badge-ready"><span class="status-dot-pulse"></span>Ready</span>'
 
     if is_fallback:
-        model_tag_html = f'<div class="model-tag-chip" style="border-color: rgba(56, 189, 248, 0.45); color: #38BDF8; background: rgba(14, 165, 233, 0.12);" title="Auto-failover model active">⚡ {model_id} (fallback)</div>'
+        model_tag_html = '<div class="model-tag-chip" style="border-color: rgba(56, 189, 248, 0.45); color: #38BDF8; background: rgba(14, 165, 233, 0.12);" title="Auto-failover active">⚡ OCR Extraction AI (Failover)</div>'
     else:
-        model_tag_html = f'<div class="model-tag-chip">{model_id}</div>'
+        model_tag_html = '<div class="model-tag-chip">⚡ OCR Extraction AI</div>'
 
     logo_b64 = get_nobeth_logo_base64()
     if logo_b64:
@@ -201,7 +201,7 @@ def render_empty_state_right() -> str:
 </div>
 <div class="empty-state-title">AI Workstation Ready</div>
 <div class="empty-state-desc">
-Upload a document on the left and launch <strong>Gemini Vision Extraction</strong> to generate source-faithful data and dynamic JSON structures.
+Upload a document on the left and launch <strong>OCR Extraction AI</strong> to generate source-faithful data and dynamic JSON structures.
 </div>
 </div>
 """
@@ -302,9 +302,9 @@ def render_extraction_header(doc_type: str, confidence_level: str, model_id: str
     conf_class = "status-badge-ready" if confidence_level == "HIGH" else "status-badge-processing" if confidence_level == "MEDIUM" else "status-badge-warning"
 
     if is_fallback:
-        model_badge = f'<span class="model-tag-chip" style="border-color: rgba(56, 189, 248, 0.45); color: #38BDF8; background: rgba(14, 165, 233, 0.12);" title="Auto-failover model active">⚡ {model_id}</span>'
+        model_badge = '<span class="model-tag-chip" style="border-color: rgba(56, 189, 248, 0.45); color: #38BDF8; background: rgba(14, 165, 233, 0.12);" title="Auto-failover active">⚡ OCR Extraction AI (Failover)</span>'
     else:
-        model_badge = f'<span class="model-tag-chip">{model_id}</span>'
+        model_badge = '<span class="model-tag-chip">⚡ OCR Extraction AI</span>'
 
     raw = f"""
 <div class="meta-chip-toolbar animate-entrance">
@@ -508,7 +508,7 @@ def render_batch_current_file(
     model_name: Optional[str] = None,
 ) -> str:
     """Renders the banner highlighting the file actively being processed."""
-    model_chip = f'<span class="model-tag-chip" style="font-size: 0.68rem; padding: 2px 7px;">⚡ {model_name}</span>' if model_name else ""
+    model_chip = '<span class="model-tag-chip" style="font-size: 0.68rem; padding: 2px 7px;">⚡ OCR Extraction AI</span>'
     raw = f"""
 <div class="batch-current-file-box animate-entrance">
   <div class="batch-file-title">
